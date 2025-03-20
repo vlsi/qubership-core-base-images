@@ -1,8 +1,16 @@
-# Qubership Base Alpine Image
+# Qubership Base Images
 
-A secure and feature-rich base Alpine Linux image for containerized applications, designed with security and flexibility in mind.
+This repository contains secure and feature-rich base Alpine Linux images for containerized applications, designed with security and flexibility in mind.
 
-## Features
+## Available Images
+
+### 1. Base Alpine Image
+A minimal Alpine-based image with essential security and system utilities.
+
+### 2. Java Alpine Image
+An Alpine-based image with OpenJDK 21 and additional Java-specific configurations.
+
+## Common Features
 
 - Based on Alpine Linux 3.21.0
 - Pre-configured with essential security settings
@@ -13,19 +21,58 @@ A secure and feature-rich base Alpine Linux image for containerized applications
 - Initialization script support
 - UTF-8 locale configuration
 
-## Base Image Details
+## Base Alpine Image Details
 
 - **Base Image**: `alpine:3.21.0`
 - **Default User**: `appuser` (UID: 10001)
 - **Default Home**: `/app`
 - **Default Language**: `en_US.UTF-8`
 
-## Security Features
+### Dependencies
+- `ca-certificates`: 20241121-r1
+- `curl`: 8.12.1-r1
+- `bash`: 5.2.37-r0
+- `zlib`: 1.3.1-r2
+- `nss_wrapper`: 1.1.12-r1
 
-- Non-root user execution
-- Secure certificate handling
-- Proper file permissions
-- Volume isolation for sensitive data
+### Volume Mounts
+- `/tmp`
+- `/app/nss`
+- `/etc/ssl/certs`
+- `/usr/local/share/ca-certificates`
+
+## Java Alpine Image Details
+
+- **Base Image**: `alpine:3.21.0`
+- **Java Version**: OpenJDK 21 (21.0.6_p7-r0)
+- **Default User**: `appuser` (UID: 10001)
+- **Default Home**: `/app`
+- **Default Language**: `en_US.UTF-8`
+
+### Additional Dependencies
+- `openjdk21-jdk`: 21.0.6_p7-r0
+- `fontconfig`: 2.15.0-r1
+- `font-dejavu`: 2.37-r5
+- `procps-ng`: 4.0.4-r2
+- `wget`: 1.25.0-r0
+- `zip`: 3.0-r13
+- `unzip`: 6.0-r15
+- And all base Alpine dependencies
+
+### Java-Specific Environment Variables
+- `JAVA_HOME`: `/usr/lib/jvm/java-21-openjdk`
+- `MALLOC_ARENA_MAX`: 2
+- `MALLOC_MMAP_THRESHOLD_`: 131072
+- `MALLOC_TRIM_THRESHOLD_`: 131072
+- `MALLOC_TOP_PAD_`: 131072
+- `MALLOC_MMAP_MAX_`: 65536
+
+### Volume Mounts
+- `/tmp`
+- `/etc/env`
+- `/app/nss`
+- `/etc/ssl/certs/java`
+- `/etc/secret`
 
 ## Directory Structure
 
@@ -37,22 +84,13 @@ A secure and feature-rich base Alpine Linux image for containerized applications
     └── certs/      # Certificate storage
 ```
 
-## Environment Variables
+## Security Features
 
-- `HOME`: `/app`
-- `USER_NAME`: `appuser`
-- `CERTIFICATE_FILE_LOCATION`: `/usr/local/share/ca-certificates`
-- `LANG`: `en_US.UTF-8`
-- `LANGUAGE`: `en_US:en`
-- `LC_ALL`: `en_US.UTF-8`
-
-## Volume Mounts
-
-The following directories are exposed as volumes:
-- `/tmp`
-- `/app/nss`
-- `/etc/ssl/certs`
-- `/usr/local/share/ca-certificates`
+- Non-root user execution (UID: 10001)
+- Secure certificate handling
+- Proper file permissions
+- Volume isolation for sensitive data
+- NSS wrapper integration
 
 ## Initialization Process
 
@@ -65,12 +103,20 @@ The entrypoint script performs the following operations:
 
 ## Usage
 
-### Basic Usage
+### Base Alpine Image
 
 ```dockerfile
 FROM qubership/base-alpine:amd64
 
 # Your application setup here
+```
+
+### Java Alpine Image
+
+```dockerfile
+FROM qubership/java-alpine:amd64
+
+# Your Java application setup here
 ```
 
 ### Adding Custom Certificates
@@ -83,25 +129,6 @@ Place your initialization scripts (`.sh` files) in `/app/init.d/`. They will be 
 
 ## Signal Handling
 
-The image includes comprehensive signal handling for graceful shutdowns and proper process management. It supports all standard Linux signals and ensures proper cleanup on container termination.
-
-## Security Considerations
-
-- Runs as non-root user (UID: 10001)
-- Implements proper file permissions
-- Uses nss_wrapper for user management
-- Isolates sensitive data in volumes
-- Handles certificates securely
-
-## Dependencies
-
-- `ca-certificates`: 20241121-r1
-- `curl`: 8.12.1-r1
-- `zlib`
-- `nss_wrapper`: 1.1.12-r1
-
-## License
-
-[Add your license information here]
+The images include comprehensive signal handling for graceful shutdowns and proper process management. They support all standard Linux signals and ensure proper cleanup on container termination. For SIGTERM signals, there is a 10-second delay to prevent 503/502 errors during deployment rollouts.
 
 --- 
