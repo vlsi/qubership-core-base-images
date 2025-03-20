@@ -1,0 +1,54 @@
+FROM alpine:3.21.0
+LABEL maintainer="qubership"
+
+ARG NSS_WRAPPER_VERSION="1.1.12-r1"
+
+RUN apk add --no-cache \
+    ca-certificates=20241121-r1 \
+    curl=8.12.1-r1 \
+    bash=5.2.37-r0 \
+    zlib=1.3.1-r2 
+
+ENV HOME=/app \
+    USER_NAME=appuser \
+    CERTIFICATE_FILE_LOCATION=/usr/local/share/ca-certificates
+
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+#Add nss_wrapper
+RUN wget https://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/nss_wrapper-${NSS_WRAPPER_VERSION}.apk && \
+    apk add nss_wrapper-${NSS_WRAPPER_VERSION}.apk
+
+RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 && \
+    mkdir -p /tmp/cert && \
+    mkdir $HOME && \
+    chmod g=u $HOME && \
+    chown 10001:0 $HOME && \
+    chmod ug+rw ${CERTIFICATE_FILE_LOCATION} && \
+    chown 10001:0 ${CERTIFICATE_FILE_LOCATION} && \
+    chmod ug+rw /etc/ssl/certs && \
+    chown -R 10001:0 /etc/ssl/certs && \
+    mkdir -p /app/init.d && \
+    mkdir -p /app/nss && \
+    chmod ug+rw -R /app/nss && \
+    chown -R 10001:0 /app/nss && \
+    mkdir -p /app/volumes/certs && \
+    chmod ug+r -R /app/volumes/certs && \
+    chown -R 10001:0 /app/volumes/certs && \
+    cp -R /etc/ssl/certs /app/volumes && \
+    chmod ug+r -R /app/volumes && \
+    chown -R 10001:0 /app/volumes
+
+USER 10001:10001
+
+WORKDIR /app
+
+VOLUME /tmp
+VOLUME /app/nss
+VOLUME /etc/ssl/certs
+VOLUME ${CERTIFICATE_FILE_LOCATION}
+
+COPY --chown=10001:0 --chmod=755 entrypoint.sh /usr/bin/entrypoint.sh
+ENTRYPOINT ["/usr/bin/entrypoint.sh"]

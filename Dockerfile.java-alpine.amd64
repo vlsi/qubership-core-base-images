@@ -1,0 +1,110 @@
+FROM alpine:3.21.0
+LABEL maintainer="qubership"
+
+RUN apk add --no-cache \
+    alpine-baselayout=3.6.8-r1 \
+    alpine-baselayout-data=3.6.8-r1 \
+    alpine-keys=2.5-r0 \
+    alpine-release=3.21.0-r0 \
+    apk-tools=2.14.6-r2 \
+    busybox=1.37.0-r12 \
+    busybox-binsh=1.37.0-r12 \
+    ca-certificates-bundle=20241121-r1 \
+    libcrypto3=3.3.3-r0 \
+    libssl3=3.3.3-r0 \
+    musl=1.2.5-r9 \
+    musl-utils=1.2.5-r8 \
+    scanelf=1.3.8-r1 \
+    ssl_client=1.37.0-r8 \
+    zlib=1.3.1-r2 \
+    zip=3.0-r13 \
+    unzip=6.0-r15 \
+    openjdk21-jdk=21.0.6_p7-r0 \
+    curl=8.12.1-r1 \
+    bash=5.2.37-r0 \
+    libstdc++=14.2.0-r4 \
+    fontconfig=2.15.0-r1 \
+    font-dejavu=2.37-r5 \
+    procps-ng=4.0.4-r2 \
+    wget=1.25.0-r0
+
+# Set environment variables:
+#   Malloc parameters to reduce memory consumption in the container
+#   Diagnostic variables
+#   Certificate upload variables
+#   Profiler is disabled by default
+#   gcompat library should be preloaded at the start for alpine
+
+ENV HOME=/app \
+    USER_NAME=appuser \
+    JAVA_HOME=/usr/lib/jvm/java-21-openjdk \
+    MALLOC_ARENA_MAX=2 \
+    MALLOC_MMAP_THRESHOLD_=131072 \
+    MALLOC_TRIM_THRESHOLD_=131072 \
+    MALLOC_TOP_PAD_=131072 \
+    MALLOC_MMAP_MAX_=65536 \
+    CERTIFICATE_FILE_LOCATION=/etc/ssl/certs/java/cacerts 
+
+
+COPY font-local.conf /etc/fonts/local.conf
+COPY --chown=10001:0 --chmod=755 entrypoint.sh /usr/bin/entrypoint.sh
+
+RUN mkdir /app && \
+    mkdir -p /tmp/cert && \
+    chmod -R ug+rw /tmp && \
+    chown -R 10001:0 /tmp && \
+    mkdir -p /etc/env && \
+    chmod -R ug+rw /etc/env && \
+    chown -R 10001:0 /etc/env && \
+    chmod g=u ${HOME} /etc/passwd && \
+    chmod ug+rw ${CERTIFICATE_FILE_LOCATION} && \
+    chown 10001:0 ${CERTIFICATE_FILE_LOCATION} && \
+    mkdir -p /etc/secret && \
+    chmod ug+rw /etc/secret && \
+    chown 10001:0 /etc/secret && \
+    chmod ug+rx -R /usr/bin && \
+    chown -R 10001:0 /usr/bin && \
+    mkdir -p /run/lock/subsys && \
+    chmod ug+rw /run/lock && \
+    chown 10001:0 /run/lock && \
+    chmod ug+rw /var/lock && \
+    chown 10001:0 /var/lock && \
+    chmod ug+rw /var/run && \
+    chown 10001:0 /var/run && \
+    mkdir -p /etc/alternatives && ln -s /usr/lib/jvm/java-21-openjdk/bin/java /etc/alternatives/java && \
+    chmod ug+rw -R /etc/ssl/certs/java && \
+    chown -R 10001:0 /etc/ssl/certs/java && \
+    mkdir -p /app/volumes/certs && \
+    cp -R /etc/ssl/certs/java /app/volumes/certs && \
+    mkdir -p /app/nss && \
+    chmod ug+rw -R /app/nss && \
+    chown 10001:0 /app/nss && \
+    chmod ug+r -R /app/volumes && \
+    chown -R 10001:0 /app/volumes && \
+    find /app \( -type d -exec chmod ug+rwx {} \; -exec chown 10001:0 {} \; -o -type f -exec chmod ug+rw {} \; -exec chown 10001:0 {} \; \) 
+
+#Add nss_wrapper
+ARG NSS_WRAPPER_VERSION="1.1.12-r1"
+RUN wget https://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/nss_wrapper-${NSS_WRAPPER_VERSION}.apk && \
+    apk add nss_wrapper-${NSS_WRAPPER_VERSION}.apk
+
+VOLUME /tmp
+VOLUME /etc/env
+VOLUME /app/nss
+VOLUME /etc/ssl/certs/java
+VOLUME /etc/secret
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+# Set user appuser for image run and all the following RUN, CMD and ENTRYPOINT commands
+USER 10001:10001
+
+# Define working directory
+WORKDIR /app
+
+ENTRYPOINT ["/usr/bin/entrypoint.sh"]
+
+# Define default command.
+CMD ["bash"]
