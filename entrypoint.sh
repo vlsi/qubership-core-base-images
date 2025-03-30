@@ -115,12 +115,11 @@ if [[ "$1" != "bash" ]] && [[ "$1" != "sh" ]] ; then
     run_init_scripts
     for sig in $SIGNALS_TO_RETHROW; do trap 'rethrow_handler "$sig"' "$sig" > /dev/null 2>&1; done
     echo "Run subcommand:" "$@"
-    "$@" &
+    $@ &
     pid="$!"
-    echo "pid=$pid"
-    wait "$pid" ; subcommandRetCode=$?
-    echo "Subcommand process ended with return code ${subcommandRetCode}"
-    exit $subcommandRetCode
+    wait "$pid" ; javaRetCode=$?
+    echo "Java process ended with return code ${javaRetCode}"
+    exit $javaRetCode
 else
-    "$@"
+    exec $@
 fi
