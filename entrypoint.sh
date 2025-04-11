@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 
 load_certificates() {
-    echo "Load certificates to trust store"
+
     export certs_location="${CERTIFICATE_FILE_LOCATION}"
     # shellcheck disable=SC2016
-    find /tmp/cert | grep -E '\.cer|\.pem' | grep -v '\.\.' | xargs -n 1 --no-run-if-empty sh -c \
-      'echo -file "$1" ; cp "$1" "$certs_location" ; update-ca-certificates; ' argv0
+    certs_found=$(find /tmp/cert -type f \( -name '*.crt' -o -name '*.cer' -o -name '*.pem' \))
+    if which keytool; then
+      echo "Load certificates to java keystore"
+      export pass=${CERTIFICATE_FILE_PASSWORD:-changeit}
+
+      # Change password if passed and default one set as old
+      if [ "$pass" != "changeit" ] &&  keytool -list -keystore "${certs_location}" -storepass changeit > /dev/null; then
+         keytool -v -storepasswd -keystore "${certs_location}" -storepass changeit -new "$pass"
+      fi
+
+      echo $certs_found | xargs -n 1 --no-run-if-empty bash -c  \
+        'alias=$(basename "$1"); echo -file "$1" -alias "$alias" ; keytool -keystore ${certs_location} -importcert -file "$1" -alias "$alias"  -storepass ${pass} -noprompt' argv0
+
+    else
+      echo "Load certificates to trust store"
+      echo $certs_found | xargs -n 1 --no-run-if-empty sh -c \
+        'echo -file "$1" ; cp "$1" "$certs_location" ; update-ca-certificates; ' argv0
+    fi
 }
 
 create_user() {
@@ -117,9 +133,9 @@ if [[ "$1" != "bash" ]] && [[ "$1" != "sh" ]] ; then
     echo "Run subcommand:" "$@"
     $@ &
     pid="$!"
-    wait "$pid" ; javaRetCode=$?
-    echo "Java process ended with return code ${javaRetCode}"
-    exit $javaRetCode
+    wait "$pid" ; retCode=$?
+    echo "Process ended with return code ${retCode}"
+    exit $retCode
 else
     exec $@
 fi
