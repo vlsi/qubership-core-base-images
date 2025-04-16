@@ -76,6 +76,7 @@ jobs:
       download-artifact: false
       dry-run: ${{ github.event.inputs.dry-run == 'true' }}
       platforms: linux/amd64,linux/arm64
+      component: '[{"name": "qubership/core-base", "file": "./Dockerfile.base-alpine", "context": "."},{"name": "qubership/java-base", "file": "./Dockerfile.java-alpine", "context": "."}]'
 
   github-release:
     needs: [tag]
