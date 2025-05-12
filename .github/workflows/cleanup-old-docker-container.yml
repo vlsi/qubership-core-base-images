@@ -22,6 +22,10 @@ on:
           description: "Enable dry-run mode"
           required: false
           default: "false"
+        debug:
+          description: "Enable debug mode"
+          required: false
+          default: "false"          
 jobs:
     cleanup:
       runs-on: ubuntu-latest
@@ -39,8 +43,9 @@ jobs:
           uses: Netcracker/qubership-workflow-hub/actions/container-package-cleanup@493dc3f654c2d4459ea43918ba0d41d1813640ca
           with:
             threshold-days: ${{ github.event.inputs.threshold-days || 8 }}
-            included-tags: ${{ github.event.inputs.included-tags || 'dev*' }}
-            excluded-tags: ${{ github.event.inputs.excluded-tags || 'release*' }}
+            included-tags: ${{ github.event.inputs.included-tags || '' }}
+            excluded-tags: ${{ github.event.inputs.excluded-tags || 'latest,release*,*.*' }}
             dry-run: ${{ github.event.inputs.dry-run || 'false' }}
+            debug: ${{ github.event.inputs.debug || 'false' }}
           env:
             PACKAGE_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
