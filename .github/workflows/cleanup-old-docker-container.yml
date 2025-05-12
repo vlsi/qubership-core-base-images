@@ -22,10 +22,12 @@ on:
           description: "Enable dry-run mode"
           required: false
           default: "false"
+          type: "boolean"
         debug:
           description: "Enable debug mode"
           required: false
-          default: "false"          
+          default: "false"
+          type: "boolean"
 jobs:
     cleanup:
       runs-on: ubuntu-latest
