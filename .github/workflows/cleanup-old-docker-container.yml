@@ -42,7 +42,7 @@ jobs:
             echo "**Excluded tags**: ${{ github.event.inputs.excluded-tags || 'latest,release*,*.*' }}"
             echo "**Dry-run**: ${{ github.event.inputs.dry-run || 'false' }}"
         - name: Run Container Package Cleanup Action
-          uses: nookyo/qubership-workflow-hub/actions/container-package-cleanup@main
+          uses: netcracker/qubership-workflow-hub/actions/container-package-cleanup@main
           with:
             threshold-days: ${{ github.event.inputs.threshold-days || 8 }}
             included-tags: ${{ github.event.inputs.included-tags || '' }}
