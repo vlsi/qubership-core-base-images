@@ -13,7 +13,7 @@ on:
         included-tags:
           description: "Tags to include for deletion"
           required: false
-          default: "test*,dev*"
+          default: "*"
         excluded-tags:
           description: "Tags to exclude from deletion"
           required: false
@@ -38,14 +38,15 @@ jobs:
             echo "**Event**: ${{ github.event_name }}"
             echo "**Actor**: ${{ github.actor }}"
             echo "**Threshold days**: ${{ github.event.inputs.threshold-days || 8 }}"
-            echo "**Included tags**: ${{ github.event.inputs.included-tags || '' }}"
+            echo "**Included tags**: ${{ github.event.inputs.included-tags || '*' }}"
             echo "**Excluded tags**: ${{ github.event.inputs.excluded-tags || 'latest,release*,*.*' }}"
             echo "**Dry-run**: ${{ github.event.inputs.dry-run || 'false' }}"
+            echo "**Debug**: ${{ github.event.inputs.debug || 'false' }}"
         - name: Run Container Package Cleanup Action
-          uses: netcracker/qubership-workflow-hub/actions/container-package-cleanup@main
+          uses: netcracker/qubership-workflow-hub/actions/container-package-cleanup@7a4938da2973b95efe670c3b4cbb782d14b2cc9c
           with:
             threshold-days: ${{ github.event.inputs.threshold-days || 8 }}
-            included-tags: ${{ github.event.inputs.included-tags || '' }}
+            included-tags: ${{ github.event.inputs.included-tags || '*' }}
             excluded-tags: ${{ github.event.inputs.excluded-tags || 'latest,release*,*.*' }}
             dry-run: ${{ github.event.inputs.dry-run || 'false' }}
             debug: ${{ github.event.inputs.debug || 'false' }}
